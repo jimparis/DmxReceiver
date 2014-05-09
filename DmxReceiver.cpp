@@ -27,6 +27,14 @@ void dmx_end(void)
 	NVIC_DISABLE_IRQ(IRQ_UART0_ERROR);  //Enable the frame error IRQ
 }
 
+void dmx_clear(void)
+{
+        __disable_irq();
+        memset((void *)dmxBuffer1, 0, DMX_BUFFER_SIZE);
+        memset((void *)dmxBuffer2, 0, DMX_BUFFER_SIZE);
+        __enable_irq();
+}
+
 unsigned int dmx_frameCount(void)
 {
 	return frameCount;
