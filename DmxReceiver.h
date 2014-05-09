@@ -1,3 +1,6 @@
+#ifndef DMXRECEIVER_H
+#define DMXRECEIVER_H
+
 #include <inttypes.h>
 
 #define UART_C3_FEIE		(uint8_t)0x02			//Framing Error Interrupt Enable
@@ -27,3 +30,5 @@ public:
 	unsigned int frameCount(void) {return dmx_frameCount();}
 	bool newFrame(void) {return dmx_newFrame();}
 };
+
+#endif
