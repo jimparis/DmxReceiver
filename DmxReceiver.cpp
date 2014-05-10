@@ -19,30 +19,30 @@ HardwareSerial Uart = HardwareSerial();
 
 void dmx_begin(void)
 {
-	// UART Initialization
-	Uart.begin(250000);
+        // UART Initialization
+        Uart.begin(250000);
 
         // Fire UART0 receive interrupt immediately after each byte received
-	UART0_RWFIFO = 1;
+        UART0_RWFIFO = 1;
 
         // Set error IRQ priority lower than that of the status IRQ,
         // so that the status IRQ receives any leftover bytes before
         // we detect and trigger a new frame.
-	NVIC_SET_PRIORITY(IRQ_UART0_ERROR,
+        NVIC_SET_PRIORITY(IRQ_UART0_ERROR,
                           NVIC_GET_PRIORITY(IRQ_UART0_STATUS) + 1);
 
         // Enable UART0 interrupt on frame error and enable IRQ
-	UART0_C3 |= UART_C3_FEIE;
-	NVIC_ENABLE_IRQ(IRQ_UART0_ERROR);
+        UART0_C3 |= UART_C3_FEIE;
+        NVIC_ENABLE_IRQ(IRQ_UART0_ERROR);
 
-	activeBuffer = dmxBuffer1;
-	inactiveBuffer = dmxBuffer2;
+        activeBuffer = dmxBuffer1;
+        inactiveBuffer = dmxBuffer2;
 }
 
 void dmx_end(void)
 {
-	Uart.end();
-	NVIC_DISABLE_IRQ(IRQ_UART0_ERROR);
+        Uart.end();
+        NVIC_DISABLE_IRQ(IRQ_UART0_ERROR);
 }
 
 void dmx_clear(void)
@@ -55,36 +55,36 @@ void dmx_clear(void)
 
 unsigned int dmx_frameCount(void)
 {
-	return frameCount;
+        return frameCount;
 }
 
 uint8_t dmx_getDimmer(uint16_t d)
 {
-	return inactiveBuffer[d];
+        return inactiveBuffer[d];
 }
 
 int dmx_bufferService (void)
 {
-	__disable_irq(); //Prevents conflicts with the UART0 error ISR
-	int available=Uart.available();
-	int retval=available;
-	while (available--)
-	{
-		activeBuffer[dmxBufferIndex]=Uart.read();
-		if (dmxBufferIndex<(DMX_BUFFER_SIZE-1)) dmxBufferIndex++;
-	}
-	__enable_irq();
-	return retval;
+        __disable_irq(); //Prevents conflicts with the UART0 error ISR
+        int available=Uart.available();
+        int retval=available;
+        while (available--)
+        {
+                activeBuffer[dmxBufferIndex]=Uart.read();
+                if (dmxBufferIndex<(DMX_BUFFER_SIZE-1)) dmxBufferIndex++;
+        }
+        __enable_irq();
+        return retval;
 }
 
 bool dmx_newFrame(void)
 {
-	if (newFrame)
-	{
-		newFrame=false;
-		return true;
-	}
-	return false;
+        if (newFrame)
+        {
+                newFrame=false;
+                return true;
+        }
+        return false;
 }
 
 // UART0 will throw a frame error on the DMX break pulse.  That's our
