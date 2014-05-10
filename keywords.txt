@@ -1,0 +1,8 @@
+DmxReceiver	KEYWORD2
+begin	KEYWORD2
+end	KEYWORD2
+clear	KEYWORD2
+bufferService	KEYWORD2
+getDimmer	KEYWORD2
+frameCount	KEYWORD2
+newFrame	KEYWORD2
