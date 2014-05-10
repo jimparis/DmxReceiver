@@ -17,7 +17,7 @@ static volatile unsigned int frameCount=0;
 static volatile bool newFrame=false;
 HardwareSerial Uart = HardwareSerial();
 
-void dmx_begin(void)
+void DmxReceiver::begin(void)
 {
         // UART Initialization
         Uart.begin(250000);
@@ -39,13 +39,13 @@ void dmx_begin(void)
         inactiveBuffer = dmxBuffer2;
 }
 
-void dmx_end(void)
+void DmxReceiver::end(void)
 {
         Uart.end();
         NVIC_DISABLE_IRQ(IRQ_UART0_ERROR);
 }
 
-void dmx_clear(void)
+void DmxReceiver::clear(void)
 {
         __disable_irq();
         memset((void *)dmxBuffer1, 0, DMX_BUFFER_SIZE);
@@ -53,17 +53,17 @@ void dmx_clear(void)
         __enable_irq();
 }
 
-unsigned int dmx_frameCount(void)
+unsigned int DmxReceiver::frameCount(void)
 {
-        return frameCount;
+        return ::frameCount;
 }
 
-uint8_t dmx_getDimmer(uint16_t d)
+uint8_t DmxReceiver::getDimmer(uint16_t d)
 {
         return inactiveBuffer[d];
 }
 
-int dmx_bufferService (void)
+int DmxReceiver::bufferService (void)
 {
         __disable_irq(); //Prevents conflicts with the UART0 error ISR
         int available=Uart.available();
@@ -77,11 +77,11 @@ int dmx_bufferService (void)
         return retval;
 }
 
-bool dmx_newFrame(void)
+bool DmxReceiver::newFrame(void)
 {
-        if (newFrame)
+        if (::newFrame)
         {
-                newFrame=false;
+                ::newFrame=false;
                 return true;
         }
         return false;
@@ -100,10 +100,10 @@ void uart0_error_isr(void)
 
         // Ensure we've processed all the data that may still be sitting
         // in software buffers.
-        dmx_bufferService();
+        DmxReceiver::bufferService();
 
         // Update frame count and swap buffers
-        frameCount++;
+        ::frameCount++;
         dmxBufferIndex = 0;
         if (activeBuffer == dmxBuffer1)
         {
@@ -115,5 +115,5 @@ void uart0_error_isr(void)
                 activeBuffer = dmxBuffer1;
                 inactiveBuffer = dmxBuffer2;
         }
-        newFrame=true;
+        ::newFrame=true;
 }
