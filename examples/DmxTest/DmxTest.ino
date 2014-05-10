@@ -1,4 +1,4 @@
-/* DmxReceiver DmxTes.ino - DMX Test
+/* DmxReceiver DmxTest.ino - DMX Test
    Copyright (c) 2014 Jim Paris
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
