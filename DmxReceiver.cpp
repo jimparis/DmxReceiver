@@ -1,6 +1,12 @@
+#include "mk20dx128.h"
 #include "DmxReceiver.h"
 #include "HardwareSerial.h"
+
 #define DMX_BUFFER_SIZE 513
+
+#ifndef UART_C3_FEIE
+#define UART_C3_FEIE    (uint8_t)0x02   // Framing Error Interrupt Enable
+#endif
 
 static volatile uint8_t dmxBuffer1[DMX_BUFFER_SIZE];
 static volatile uint8_t dmxBuffer2[DMX_BUFFER_SIZE];
