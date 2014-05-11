@@ -68,12 +68,17 @@ void DmxReceiver::end(void)
         NVIC_DISABLE_IRQ(IRQ_UART0_ERROR);
 }
 
-void DmxReceiver::clear(void)
+void DmxReceiver::fill(uint8_t v)
 {
         __disable_irq();
-        memset((void *)dmxBuffer1, 0, DMX_BUFFER_SIZE);
-        memset((void *)dmxBuffer2, 0, DMX_BUFFER_SIZE);
+        memset((void *)dmxBuffer1, v, DMX_BUFFER_SIZE);
+        memset((void *)dmxBuffer2, v, DMX_BUFFER_SIZE);
         __enable_irq();
+}
+
+void DmxReceiver::clear(void)
+{
+        fill(0);
 }
 
 unsigned int DmxReceiver::frameCount(void)

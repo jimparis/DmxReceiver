@@ -38,6 +38,9 @@ public:
         /* Clear all stored DMX values to zero */
         static void clear(void);
 
+        /* Fill DMX data with specified value */
+        static void fill(uint8_t v);
+
         /* Call this every 2ms or faster */
 	static int bufferService(void);
 
