@@ -71,8 +71,10 @@ void DmxReceiver::end(void)
 void DmxReceiver::fill(uint8_t v)
 {
         __disable_irq();
-        memset((void *)dmxBuffer1, v, DMX_BUFFER_SIZE);
-        memset((void *)dmxBuffer2, v, DMX_BUFFER_SIZE);
+        dmxBuffer1[0] = 0;
+        memset((void *)(dmxBuffer1 + 1), v, DMX_BUFFER_SIZE - 1);
+        dmxBuffer2[0] = 0;
+        memset((void *)(dmxBuffer2 + 1), v, DMX_BUFFER_SIZE - 1);
         __enable_irq();
 }
 
