@@ -29,12 +29,11 @@
 
 #include <DmxReceiver.h>
 
-DmxReceiver dmx;
 IntervalTimer dmxTimer;
 
 void dmxTimerISR(void)
 {
-        dmx.bufferService();
+        DmxReceiver.bufferService();
 }
 
 void setup() {
@@ -42,7 +41,7 @@ void setup() {
         Serial.begin(115200);
 
         /* DMX */
-        dmx.begin();
+        DmxReceiver.begin();
 
         /* Use a timer to service DMX buffers every 1ms */
         dmxTimer.begin(dmxTimerISR, 1000);
@@ -55,7 +54,7 @@ elapsedMillis elapsed;
 void loop()
 {
         /* Toggle LED on every new frame */
-        if (dmx.newFrame())
+        if (DmxReceiver.newFrame())
         {
                 led = !led;
                 digitalWrite(LED_BUILTIN, led);
@@ -64,11 +63,11 @@ void loop()
         /* Dump DMX data every second */
         if (elapsed > 1000) {
                 elapsed -= 1000;
-                Serial.printf("DMX frameCount=%d", dmx.frameCount());
+                Serial.printf("DMX frameCount=%d", DmxReceiver.frameCount());
 
                 /* Display all nonzero DMX values */
                 for (int i = 0; i < 512; i++) {
-                        uint8_t v = dmx.getDimmer(i);
+                        uint8_t v = DmxReceiver.getDimmer(i);
                         if (v)
                                 Serial.printf(" %d:%d", i, v);
                 }

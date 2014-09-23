@@ -24,35 +24,59 @@
 #ifndef DMXRECEIVER_H
 #define DMXRECEIVER_H
 
+#include "HardwareSerial.h"
 #include <inttypes.h>
 
-class DmxReceiver
+class DmxReceiverClass
 {
 public:
+    DmxReceiverClass();
+    
         /* Initialize UART0 for DMX */
-	static void begin(void);
+	void begin(void);
 
         /* Deinitialize */
-	static void end(void);
+	void end(void);
 
         /* Clear all stored DMX values to zero */
-        static void clear(void);
+    void clear(void);
 
         /* Fill DMX data with specified value */
-        static void fill(uint8_t v);
+    void fill(uint8_t v);
 
         /* Call this every 2ms or faster */
-	static int bufferService(void);
+	int bufferService(void);
 
         /* Return the value at DMX address d */
-	static uint8_t getDimmer(uint16_t d);
+	uint8_t getDimmer(uint16_t d);
+	
+	volatile uint8_t* getBuffer();
 
         /* Return the number of frame that have been received */
-	static unsigned int frameCount(void);
+	unsigned int frameCount(void);
 
         /* Returns true if a new frame has been received since the
            last call to this function. */
-	static bool newFrame(void);
+	bool newFrame(void);
+
+private:
+
+    enum {
+        DMX_BUFFER_SIZE = 513
+    };
+
+    HardwareSerial Uart;
+    volatile uint8_t m_dmxBuffer1[DMX_BUFFER_SIZE];
+    volatile uint8_t m_dmxBuffer2[DMX_BUFFER_SIZE];
+    volatile uint8_t *m_activeBuffer;
+    volatile uint8_t *m_inactiveBuffer;
+    volatile uint16_t m_dmxBufferIndex;
+    volatile unsigned int m_frameCount;
+    volatile bool m_newFrame;
+    
+    friend void uart0_error_isr(void);
 };
+
+extern DmxReceiverClass DmxReceiver;
 
 #endif
