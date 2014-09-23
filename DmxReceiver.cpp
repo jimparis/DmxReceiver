@@ -23,24 +23,25 @@
 
 #include "mk20dx128.h"
 #include "DmxReceiver.h"
-#include "HardwareSerial.h"
 
-#define DMX_BUFFER_SIZE 513
+#include "Arduino.h"
 
 #ifndef UART_C3_FEIE
 #define UART_C3_FEIE    (uint8_t)0x02   // Framing Error Interrupt Enable
 #endif
 
-static volatile uint8_t dmxBuffer1[DMX_BUFFER_SIZE];
-static volatile uint8_t dmxBuffer2[DMX_BUFFER_SIZE];
-static volatile uint8_t *activeBuffer;
-static volatile uint8_t *inactiveBuffer;
-static volatile uint16_t dmxBufferIndex;
-static volatile unsigned int frameCount=0;
-static volatile bool newFrame=false;
-HardwareSerial Uart = HardwareSerial();
+DmxReceiverClass::DmxReceiverClass() :
+    Uart(),
+    m_dmxBuffer1({0}),
+    m_dmxBuffer2({0}),
+    m_activeBuffer(m_dmxBuffer1),
+    m_inactiveBuffer(m_dmxBuffer2),
+    m_dmxBufferIndex(0),
+    m_frameCount(0),
+    m_newFrame(false)
+{ }
 
-void DmxReceiver::begin(void)
+void DmxReceiverClass::begin(void)
 {
         // UART Initialization
         Uart.begin(250000);
@@ -58,64 +59,71 @@ void DmxReceiver::begin(void)
         UART0_C3 |= UART_C3_FEIE;
         NVIC_ENABLE_IRQ(IRQ_UART0_ERROR);
 
-        activeBuffer = dmxBuffer1;
-        inactiveBuffer = dmxBuffer2;
+        m_activeBuffer = m_dmxBuffer1;
+        m_inactiveBuffer = m_dmxBuffer2;
 }
 
-void DmxReceiver::end(void)
+void DmxReceiverClass::end(void)
 {
         Uart.end();
         NVIC_DISABLE_IRQ(IRQ_UART0_ERROR);
 }
 
-void DmxReceiver::fill(uint8_t v)
+void DmxReceiverClass::fill(uint8_t v)
 {
         __disable_irq();
-        dmxBuffer1[0] = 0;
-        memset((void *)(dmxBuffer1 + 1), v, DMX_BUFFER_SIZE - 1);
-        dmxBuffer2[0] = 0;
-        memset((void *)(dmxBuffer2 + 1), v, DMX_BUFFER_SIZE - 1);
+        m_dmxBuffer1[0] = 0;
+        memset((void *)(m_dmxBuffer1 + 1), v, DMX_BUFFER_SIZE - 1);
+        m_dmxBuffer2[0] = 0;
+        memset((void *)(m_dmxBuffer2 + 1), v, DMX_BUFFER_SIZE - 1);
         __enable_irq();
 }
 
-void DmxReceiver::clear(void)
+void DmxReceiverClass::clear(void)
 {
         fill(0);
 }
 
-unsigned int DmxReceiver::frameCount(void)
+unsigned int DmxReceiverClass::frameCount(void)
 {
-        return ::frameCount;
+        return m_frameCount;
 }
 
-uint8_t DmxReceiver::getDimmer(uint16_t d)
+uint8_t DmxReceiverClass::getDimmer(uint16_t d)
 {
-        return inactiveBuffer[d];
+        return m_inactiveBuffer[d];
 }
 
-int DmxReceiver::bufferService (void)
+volatile uint8_t* DmxReceiverClass::getBuffer()
+{
+        return m_inactiveBuffer;
+}
+
+int DmxReceiverClass::bufferService (void)
 {
         __disable_irq(); //Prevents conflicts with the UART0 error ISR
         int available=Uart.available();
         int retval=available;
         while (available--)
         {
-                activeBuffer[dmxBufferIndex]=Uart.read();
-                if (dmxBufferIndex<(DMX_BUFFER_SIZE-1)) dmxBufferIndex++;
+                m_activeBuffer[m_dmxBufferIndex]=Uart.read();
+                if (m_dmxBufferIndex<(DMX_BUFFER_SIZE-1)) m_dmxBufferIndex++;
         }
         __enable_irq();
         return retval;
 }
 
-bool DmxReceiver::newFrame(void)
+bool DmxReceiverClass::newFrame(void)
 {
-        if (::newFrame)
+        if (m_newFrame)
         {
-                ::newFrame=false;
+                m_newFrame=false;
                 return true;
         }
         return false;
 }
+
+DmxReceiverClass DmxReceiver;
 
 // UART0 will throw a frame error on the DMX break pulse.  That's our
 // cue to switch buffers and reset the index to zero
@@ -130,20 +138,20 @@ void uart0_error_isr(void)
 
         // Ensure we've processed all the data that may still be sitting
         // in software buffers.
-        DmxReceiver::bufferService();
+        DmxReceiver.bufferService();
 
         // Update frame count and swap buffers
-        ::frameCount++;
-        dmxBufferIndex = 0;
-        if (activeBuffer == dmxBuffer1)
+        DmxReceiver.m_frameCount++;
+        DmxReceiver.m_dmxBufferIndex = 0;
+        if (DmxReceiver.m_activeBuffer == DmxReceiver.m_dmxBuffer1)
         {
-                activeBuffer = dmxBuffer2;
-                inactiveBuffer = dmxBuffer1;
+                DmxReceiver.m_activeBuffer = DmxReceiver.m_dmxBuffer2;
+                DmxReceiver.m_inactiveBuffer = DmxReceiver.m_dmxBuffer1;
         }
         else
         {
-                activeBuffer = dmxBuffer1;
-                inactiveBuffer = dmxBuffer2;
+                DmxReceiver.m_activeBuffer = DmxReceiver.m_dmxBuffer1;
+                DmxReceiver.m_inactiveBuffer = DmxReceiver.m_dmxBuffer2;
         }
-        ::newFrame=true;
+        DmxReceiver.m_newFrame = true;
 }
